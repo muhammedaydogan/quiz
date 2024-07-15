@@ -1,25 +1,55 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from "react";
 
-function App() {
+const App = () => {
+  const [posts, setPosts] = useState([]);
+  const [questions, setQuestions] = useState([]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts");
+    const data = await response.json();
+    setPosts(data);
+    generateQuestions(data);
+  };
+
+  const generateQuestions = (posts) => {
+    const generatedQuestions = Array.from({ length: 10 }, () => {
+      const randomPost = posts[Math.floor(Math.random() * posts.length)];
+      return {
+        question: generateQuestion(posts),
+        options: generateOptions(randomPost.title, posts),
+        answer: getRandomAnswer(),
+      };
+    });
+
+    setQuestions(generatedQuestions);
+  };
+
+  const generateOptions = (correctAnswer, posts) => {
+    const options = new Set([correctAnswer]);
+    while (options.size < 4) {
+      const randomPost = posts[Math.floor(Math.random() * posts.length)];
+      options.add(randomPost.title);
+    }
+    return Array.from(options).sort();
+  };
+
+  const generateQuestion = (posts) => {
+    const randomPost = posts[Math.floor(Math.random() * posts.length)];
+    return randomPost.body + "?";
+  };
+
+  const getRandomAnswer = () => Math.floor(Math.random() * 4);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <h1>Quiz App</h1>
+      <button className="font-bold">Start Quiz</button>
     </div>
   );
-}
+};
 
 export default App;

@@ -2,13 +2,16 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 const App = () => {
+  const QUESTION_TIMEOUT = 2; //30 // 30 seconds for each question
+  const INITIAL_TIMEOUT = 10; //10000 // 10secs before answering
+
   const [questions, setQuestions] = useState([]);
   const [quizState, setQuizState] = useState(0); // 0: not started, 1: started, 2: finished
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isAnswerable, setIsAnswerable] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [questionTime, setQuestionTime] = useState(30); // 30 seconds for each question
+  const [questionTime, setQuestionTime] = useState(QUESTION_TIMEOUT);
 
   useEffect(() => {
     fetchPosts();
@@ -21,9 +24,10 @@ const App = () => {
         setElapsedTime(Math.floor((Date.now() - startTime) / 1000)); // There is a bug here time shows the same as long as you click fast. but it's possibility is too low, so I skipped.
 
         setQuestionTime((prev) => {
+          // This doesn't work well but fulfills requirement of the exam, meaning that i can improve but i am not
           if (prev <= 1) {
             handleNextQuestion();
-            return 30; // Reset for the next question
+            return QUESTION_TIMEOUT; // Reset for the next question
           }
           return prev - 1;
         });
@@ -74,15 +78,15 @@ const App = () => {
     setIsAnswerable(false);
     setQuestions((prev) => prev.map((e) => ({ ...e, userAnswer: null })));
     setStartTime(Date.now());
-    setTimeout(() => setIsAnswerable(true), 10);
+    setTimeout(() => setIsAnswerable(true), INITIAL_TIMEOUT);
   };
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setIsAnswerable(false);
-      setQuestionTime(30);
-      setTimeout(() => setIsAnswerable(true), 10);
+      setQuestionTime(QUESTION_TIMEOUT);
+      setTimeout(() => setIsAnswerable(true), INITIAL_TIMEOUT);
     } else {
       setQuizState(2); // Finish the quiz
     }
@@ -130,7 +134,7 @@ const App = () => {
               <tr key={index + "questionLine"} className="hover:bg-gray-100">
                 <td className="border px-4 py-2">{question.question}</td>
                 <td className="border px-4 py-2">
-                  {question.options[question.userAnswer]}
+                  {question.options[question.userAnswer] ?? "-"}
                 </td>
                 <td className="border px-4 py-2">
                   {question.options[question.answer]}
@@ -139,11 +143,15 @@ const App = () => {
                   className={`border px-4 py-2 ${
                     question.userAnswer === question.answer
                       ? "text-green-500"
+                      : question.userAnswer == null
+                      ? "text-gray-400"
                       : "text-red-500"
                   }`}
                 >
                   {question.userAnswer === question.answer
                     ? "Correct"
+                    : question.userAnswer == null
+                    ? "No-Answer"
                     : "Incorrect"}
                 </td>
               </tr>

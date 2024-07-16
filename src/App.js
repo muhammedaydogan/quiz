@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 const App = () => {
-  const QUESTION_TIMEOUT = 2; //30 // 30 seconds for each question
-  const INITIAL_TIMEOUT = 10; //10000 // 10secs before answering
+  const QUESTION_TIMEOUT = 30; // 30 seconds for each question
+  const INITIAL_TIMEOUT = 10000; // 10secs before answering
 
   const [questions, setQuestions] = useState([]);
   const [quizState, setQuizState] = useState(0); // 0: not started, 1: started, 2: finished

@@ -166,7 +166,7 @@ const App = () => {
             className="bg-green-600 hover:bg-green-700 m-8 mb-2 px-4 py-2 rounded-lg font-semibold"
             onClick={() => finish()}
           >
-            Try Again Maybe?
+            Finish
           </button>
         </div>
       </div>

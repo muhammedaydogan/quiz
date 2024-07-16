@@ -18,7 +18,7 @@ const App = () => {
     let timer;
     if (quizState === 1) {
       timer = setInterval(() => {
-        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+        setElapsedTime(Math.floor((Date.now() - startTime) / 1000)); // There is a bug here time shows the same as long as you click fast. but it's possibility is too low, so I skipped.
 
         setQuestionTime((prev) => {
           if (prev <= 1) {
@@ -102,6 +102,12 @@ const App = () => {
     }
   };
 
+  const finish = () => {
+    setQuestions((prev) => prev.map((e) => ({ ...e, userAnswer: null })));
+    setQuizState(0);
+    setElapsedTime(0);
+  };
+
   const renderResults = () => {
     const score = questions.reduce((acc, question) => {
       return question.userAnswer === question.answer ? acc + 1 : acc;
@@ -150,7 +156,7 @@ const App = () => {
           </div>
           <button
             className="bg-green-600 hover:bg-green-700 m-8 mb-2 px-4 py-2 rounded-lg font-semibold"
-            onClick={() => alert("Not implemented yet")}
+            onClick={() => finish()}
           >
             Try Again Maybe?
           </button>

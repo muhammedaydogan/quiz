@@ -3,14 +3,12 @@ import "./App.css";
 
 const App = () => {
   const [questions, setQuestions] = useState([]);
-  const [quizState, setQuizStarted] = useState(0); // 0: not started, 1: started
+  const [quizState, setQuizState] = useState(0); // 0: not started, 1: started, 2: finished
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isAnswerable, setIsAnswerable] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [questionTime, setQuestionTime] = useState(30); // 30 seconds for each question
-
-  const initialTimeOutForQuestion = 10;
 
   useEffect(() => {
     fetchPosts();
@@ -24,7 +22,6 @@ const App = () => {
 
         setQuestionTime((prev) => {
           if (prev <= 1) {
-            clearInterval(timer);
             handleNextQuestion();
             return 30; // Reset for the next question
           }
@@ -48,6 +45,7 @@ const App = () => {
         question: generateQuestion(posts),
         options: generateOptions(randomPost.title, posts),
         answer: getRandomAnswer(),
+        userAnswer: null,
       };
     });
 
@@ -71,11 +69,12 @@ const App = () => {
   const getRandomAnswer = () => Math.floor(Math.random() * 4);
 
   const onStart = () => {
-    setQuizStarted(1);
+    setQuizState(1); // It's start state
     setCurrentQuestionIndex(0);
     setIsAnswerable(false);
+    setQuestions((prev) => prev.map((e) => ({ ...e, userAnswer: null })));
     setStartTime(Date.now());
-    setTimeout(() => setIsAnswerable(true), initialTimeOutForQuestion);
+    setTimeout(() => setIsAnswerable(true), 10);
   };
 
   const handleNextQuestion = () => {
@@ -83,14 +82,82 @@ const App = () => {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setIsAnswerable(false);
       setQuestionTime(30);
-      setTimeout(() => setIsAnswerable(true), initialTimeOutForQuestion);
+      setTimeout(() => setIsAnswerable(true), 10);
     } else {
-      // Handle quiz completion logic here
-      setQuizStarted(2); // Finish the quiz
+      setQuizState(2); // Finish the quiz
     }
   };
 
   const currentQuestion = questions[currentQuestionIndex];
+
+  const handleAnswer = (index) => {
+    if (isAnswerable) {
+      setQuestions((prev) =>
+        prev.map(
+          (e, i) =>
+            i === currentQuestionIndex ? { ...e, userAnswer: index } : e // if it's current question then fill answer
+        )
+      );
+      handleNextQuestion();
+    }
+  };
+
+  const renderResults = () => {
+    const score = questions.reduce((acc, question) => {
+      return question.userAnswer === question.answer ? acc + 1 : acc;
+    }, 0);
+
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-semibold mb-4">Results</h2>
+        <table className="min-w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border px-4 py-2">Question</th>
+              <th className="border px-4 py-2">Your Answer</th>
+              <th className="border px-4 py-2">Correct Answer</th>
+              <th className="border px-4 py-2">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {questions.map((question, index) => (
+              <tr key={index + "questionLine"} className="hover:bg-gray-100">
+                <td className="border px-4 py-2">{question.question}</td>
+                <td className="border px-4 py-2">
+                  {question.options[question.userAnswer]}
+                </td>
+                <td className="border px-4 py-2">
+                  {question.options[question.answer]}
+                </td>
+                <td
+                  className={`border px-4 py-2 ${
+                    question.userAnswer === question.answer
+                      ? "text-green-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {question.userAnswer === question.answer
+                    ? "Correct"
+                    : "Incorrect"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="flex justify-between items-center">
+          <div className="font-bold">
+            Final Score: {score} / {questions.length}
+          </div>
+          <button
+            className="bg-green-600 hover:bg-green-700 m-8 mb-2 px-4 py-2 rounded-lg font-semibold"
+            onClick={() => alert("Not implemented yet")}
+          >
+            Try Again Maybe?
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-100 relative">
@@ -115,22 +182,13 @@ const App = () => {
           <div className="flex flex-col mb-4">
             {currentQuestion.options.map((option, index) => (
               <button
-                key={index}
+                key={index + "answerButton"}
                 className={`mb-2 px-4 py-2 text-lg font-semibold text-white rounded-lg transition duration-300 ${
                   isAnswerable
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
-                onClick={() => {
-                  if (isAnswerable) {
-                    setQuestions(
-                      questions.map((e, i) =>
-                        i === currentQuestionIndex ? { ...e, answer: index } : e
-                      )
-                    );
-                    handleNextQuestion();
-                  }
-                }}
+                onClick={() => handleAnswer(index)}
                 disabled={!isAnswerable}
               >
                 {option}
@@ -139,10 +197,12 @@ const App = () => {
           </div>
         </div>
       )}
-      {quizState === 2 && <div>Finished</div>}
-      <div className="absolute top-4 left-4 text-xl font-bold">
-        Total Time Elapsed: {elapsedTime} seconds
-      </div>
+      {quizState === 2 && renderResults()}
+      {quizState !== 0 && (
+        <div className="absolute top-4 left-4 text-xl font-bold">
+          Total Time Elapsed: {elapsedTime} seconds
+        </div>
+      )}
     </div>
   );
 };
